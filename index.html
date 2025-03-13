@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERSAN Diş Hekimi Takip Sistemi</title>
+  <!-- Font Awesome (ikonlar için) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- FullCalendar Global Sürümü CSS ve JS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  
+  <!-- Stil Tanımlamaları -->
+  <style>
+    /* Temel Reset */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    /* Temaların Temel Değişkenleri */
+    .theme-light {
+      --background-color: #f4f7f9;
+      --text-color: #333;
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --accent-color: #17a2b8;
+      --border-color: #ced4da;
+      --card-bg: #ffffff;
+      --button-bg: #0d6efd;
+      --button-hover-bg: #0b5ed7;
+      --input-bg: #ffffff;
+      --sidebar-bg: #0d6efd;
+      --sidebar-text-color: #444444;
+    }
+    .theme-dark {
+      --background-color: #343a40;
+      --text-color: #f8f9fa;
+      --primary-color: #0d6efd;
+      --secondary-color: #adb5bd;
+      --accent-color: #17a2b8;
+      --border-color: #495057;
+      --card-bg: #495057;
+      --button-bg: #0d6efd;
+      --button-hover-bg: #0b5ed7;
+      --input-bg: #6c757d;
+      --sidebar-bg: #0d6efd;
+      --sidebar-text-color: #fff;
+    }
+    .theme-blue {
+      --background-color: #e0f7fa;
+      --text-color: #006064;
+      --primary-color: #00838f;
+      --secondary-color: #4dd0e1;
+      --accent-color: #00acc1;
+      --border-color: #b2ebf2;
+      --card-bg: #ffffff;
+      --button-bg: #00838f;
+      --button-hover-bg: #006064;
+      --input-bg: #e0f7fa;
+      --sidebar-bg: #006064;
+      --sidebar-text-color: #444444;
+    }
+    .theme-green {
+      --background-color: #e8f5e9;
+      --text-color: #1b5e20;
+      --primary-color: #43a047;
+      --secondary-color: #66bb6a;
+      --accent-color: #388e3c;
+      --border-color: #c8e6c9;
+      --card-bg: #ffffff;
+      --button-bg: #43a047;
+      --button-hover-bg: #388e3c;
+      --input-bg: #e8f5e9;
+      --sidebar-bg: #2e7d32;
+      --sidebar-text-color: #444444;
+    }
+    .theme-corporate {
+      --background-color: #f0f2f5;
+      --text-color: #333;
+      --primary-color: #0a3d62;
+      --secondary-color: #3c6382;
+      --accent-color: #1e3799;
+      --border-color: #dcdde1;
+      --card-bg: #ffffff;
+      --button-bg: #0a3d62;
+      --button-hover-bg: #1e3799;
+      --input-bg: #ffffff;
+      --sidebar-bg: #0a3d62;
+      --sidebar-text-color: #444444;
+    }
+    .theme-midnight {
+      --background-color: #2c3e50;
+      --text-color: #ecf0f1;
+      --primary-color: #34495e;
+      --secondary-color: #7f8c8d;
+      --accent-color: #e74c3c;
+      --border-color: #95a5a6;
+      --card-bg: #3c5a72;
+      --button-bg: #34495e;
+      --button-hover-bg: #2c3e50;
+      --input-bg: #3c5a72;
+      --sidebar-bg: #2c3e50;
+      --sidebar-text-color: #ecf0f1;
+    }
+    body { background-color: var(--background-color); color: var(--text-color); }
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100%;
+      width: 250px;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-text-color);
+      padding-top: 100px;
+      transition: width 0.3s ease;
+      overflow: hidden;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    .sidebar.collapsed { width: 60px; }
+    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar ul li {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .sidebar ul li:hover { background-color: var(--button-hover-bg); }
+    .sidebar ul li.active { background-color: var(--accent-color); }
+    .sidebar.collapsed ul li span { display: none; }
+    /* Main İçerik */
+    .main-content {
+      margin-left: 250px;
+      transition: margin-left 0.3s ease;
+      padding: 20px;
+    }
+    .sidebar.collapsed ~ .main-content { margin-left: 60px; }
+    /* Üst Tema Seçici ve Header */
+    .theme-selector {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+    }
+    .theme-selector select {
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      transition: background-color 0.3s ease;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      color: #fff;
+      padding: 15px 20px;
+      border-radius: 5px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    header h1 { margin: 0; }
+      #sidebarToggle {
+    position: fixed;
+    top: 15px;
+    left: 3px;
+    z-index: 1000;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+    /* View Toggle (Liste/Takvim) */
+    .view-toggle {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    .view-toggle button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--button-bg);
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .view-toggle button:hover { background-color: var(--button-hover-bg); }
+    /* Tab İçerikleri (Kart Tasarımı) */
+    .tab-content {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: none;
+      transition: all 0.3s ease;
+    }
+    .tab-content.active { display: block; }
+    /* Form & Input */
+    form {
+      display: grid;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    form input, form select, form button, form label { font-size: 1rem; }
+    form input, form select {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      transition: border-color 0.3s ease;
+    }
+    form input:focus, form select:focus { border-color: var(--accent-color); outline: none; }
+    form button {
+      padding: 10px;
+      background-color: var(--button-bg);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    form button:hover { background-color: var(--button-hover-bg); }
+    /* Arama Kutusu */
+    .search-box {
+      margin-bottom: 15px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+    }
+    /* Liste Elemanları */
+    ul { list-style: none; }
+    ul li {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+    ul li button {
+      background-color: var(--secondary-color);
+      color: #fff;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    ul li button:hover { background-color: var(--accent-color); }
+    /* Data Görüntüleme */
+    .data-display {
+      white-space: pre-wrap;
+      background-color: var(--card-bg);
+      padding: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    /* Takvim */
+    #appointmentCalendar {
+      max-width: 900px;
+      margin: 0 auto;
+      min-height: 500px;
+    }
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .sidebar.collapsed { width: 60px; }
+      .sidebar.collapsed ul li span { display: none; }
+      .main-content { margin-left: 60px; }
+      header { justify-content: center; }
+      #sidebarToggle { left: 10px; }
+    }
+    /* Diş Not Sistemi Stilleri */
+    .teeth-container {
+      display: grid;
+      grid-template-columns: repeat(17, 1fr);
+      gap: 5px;
+      margin: 20px 0;
+    }
+    .tooth {
+      width: 40px;
+      height: 60px;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .tooth:hover { transform: scale(1.05); }
+    .tooth.has-note {
+      background: #ffeb3b;
+      border-color: #fbc02d;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 400px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .modal-title { font-size: 1.2em; font-weight: bold; }
+    .close-modal {
+      cursor: pointer;
+      font-size: 1.5em;
+      padding: 0 5px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin: 10px 0;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    .modal-actions { text-align: right; }
+    button {
+      padding: 8px 15px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .save-btn { background: #2196F3; color: white; }
+    .cancel-btn { background: #f44336; color: white; }
+    .empty-space {
+      width: 40px;
+      height: 60px;
+    }
+    /* Raporlar Sekmesi Stilleri */
+    #reportSelection ul { list-style: none; padding: 0; }
+    #reportSelection ul li {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #reportSelection ul li:hover {
+      background-color: var(--button-hover-bg);
+      color: #fff;
+    }
+    #reportDetail { margin-top: 20px; }
+    #reportDetail .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #reportDetail input { flex: 1; }
+  </style>
+  
+  <!-- JavaScript Kodları -->
+  <script>
+    // Örnek fonksiyon tanımlamaları (updateTreatmentSelectInInvoice vb.)
+    function updateTreatmentSelectInInvoice() {}
+
+    /* ---------------------------
+       Genel Fonksiyonlar
+    --------------------------- */
+    function toggleSidebar() {
+      var sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("collapsed");
+    }
+    function openTab(tabName, element) {
+      document.querySelectorAll(".sidebar ul li").forEach(function(item) {
+        item.classList.remove("active");
+      });
+      element.classList.add("active");
+      document.querySelectorAll('.tab-content').forEach(function(tab) {
+        tab.classList.remove('active');
+      });
+      document.getElementById(tabName).classList.add('active');
+    }
+    function showAppointmentList() {
+      document.getElementById("appointmentListContainer").style.display = "block";
+      document.getElementById("appointmentCalendarContainer").style.display = "none";
+    }
+    function showAppointmentCalendar() {
+      document.getElementById("appointmentListContainer").style.display = "none";
+      document.getElementById("appointmentCalendarContainer").style.display = "block";
+      setTimeout(renderCalendar, 500);
+    }
+    function renderCalendar() {
+      var calendarEl = document.getElementById('appointmentCalendar');
+      var events = getAppointmentEvents();
+      if (window.appointmentCalendar && typeof window.appointmentCalendar.destroy === "function") {
+        window.appointmentCalendar.destroy();
+      }
+      window.appointmentCalendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: events
+      });
+      window.appointmentCalendar.render();
+    }
+    function getAppointmentEvents() {
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      return appointments.map(function(appt) {
+        return {
+          title: appt.patient,
+          start: appt.date + "T" + appt.time,
+          description: appt.notes
+        };
+      });
+    }
+    function savePatient() {
+      let firstName = document.getElementById('patientFirstName').value;
+      let lastName = document.getElementById('patientLastName').value;
+      let tc = document.getElementById('patientTc').value;
+      let age = document.getElementById('patientAge').value;
+      let dob = document.getElementById('patientDOB').value;
+      let phone = document.getElementById('patientPhone').value;
+      let notes = document.getElementById('patientNotes').value;
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      patients.push({ firstName, lastName, tc, age, dob, phone, notes });
+      localStorage.setItem('patients', JSON.stringify(patients));
+      loadPatients();
+      updatePatientSelect();
+    }
+    function loadPatients() {
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      let patientList = document.getElementById('patientList');
+      patientList.innerHTML = '';
+      let start = Math.max(0, patients.length - 10);
+      for (let i = start; i < patients.length; i++) {
+        let patient = patients[i];
+        let li = document.createElement('li');
+        li.textContent = `${patient.firstName} ${patient.lastName} (${patient.tc}) - ${patient.phone}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deletePatient(i);
+        li.appendChild(deleteBtn);
+        patientList.appendChild(li);
+      }
+    }
+    function filterPatients() {
+      let searchTerm = document.getElementById('patientSearch').value.toLowerCase();
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      let filteredIndices = [];
+      patients.forEach((patient, index) => {
+        if (
+          patient.firstName.toLowerCase().includes(searchTerm) ||
+          patient.lastName.toLowerCase().includes(searchTerm) ||
+          patient.tc.includes(searchTerm) ||
+          patient.phone.includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let patientList = document.getElementById('patientList');
+      patientList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let patient = patients[i];
+        let li = document.createElement('li');
+        li.textContent = `${patient.firstName} ${patient.lastName} (${patient.tc}) - ${patient.phone}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deletePatient(i);
+        li.appendChild(deleteBtn);
+        patientList.appendChild(li);
+      });
+    }
+    function deletePatient(index) {
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      patients.splice(index, 1);
+      localStorage.setItem('patients', JSON.stringify(patients));
+      loadPatients();
+      updatePatientSelect();
+    }
+    function updatePatientSelect() {
+      let patients = JSON.parse(localStorage.getItem('patients')) || [];
+      let appointmentPatientSelect = document.getElementById('appointmentPatient');
+      let treatmentPatientSelect = document.getElementById('treatmentPatient');
+      let invoicePatientSelect = document.getElementById('invoicePatient');
+      let paymentPatientSelect = document.getElementById('paymentPatient');
+      appointmentPatientSelect.innerHTML = '';
+      treatmentPatientSelect.innerHTML = '';
+      invoicePatientSelect.innerHTML = '';
+      paymentPatientSelect.innerHTML = '';
+      patients.forEach((patient) => {
+        let option = document.createElement('option');
+        option.value = patient.firstName + ' ' + patient.lastName;
+        option.textContent = patient.firstName + ' ' + patient.lastName;
+        appointmentPatientSelect.appendChild(option);
+        treatmentPatientSelect.appendChild(option.cloneNode(true));
+        invoicePatientSelect.appendChild(option.cloneNode(true));
+        paymentPatientSelect.appendChild(option.cloneNode(true));
+      });
+    }
+    function saveAppointment() {
+      let patient = document.getElementById('appointmentPatient').value;
+      let appointmentDate = document.getElementById('appointmentDate').value;
+      let appointmentTime = document.getElementById('appointmentTime').value;
+      let notes = document.getElementById('appointmentNotes').value;
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      appointments.push({ patient, date: appointmentDate, time: appointmentTime, notes });
+      localStorage.setItem('appointments', JSON.stringify(appointments));
+      loadAppointments();
+    }
+    function loadAppointments() {
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      let appointmentList = document.getElementById('appointmentList');
+      appointmentList.innerHTML = '';
+      let start = Math.max(0, appointments.length - 10);
+      for (let i = start; i < appointments.length; i++) {
+        let appointment = appointments[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${appointment.patient}, Tarih: ${appointment.date}, Saat: ${appointment.time}, Not: ${appointment.notes}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteAppointment(i);
+        li.appendChild(deleteBtn);
+        appointmentList.appendChild(li);
+      }
+    }
+    function filterAppointments() {
+      let searchTerm = document.getElementById('appointmentSearch').value.toLowerCase();
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      let filteredIndices = [];
+      appointments.forEach((appointment, index) => {
+        if (
+          appointment.patient.toLowerCase().includes(searchTerm) ||
+          appointment.date.includes(searchTerm) ||
+          appointment.time.includes(searchTerm) ||
+          appointment.notes.toLowerCase().includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let appointmentList = document.getElementById('appointmentList');
+      appointmentList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let appointment = appointments[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${appointment.patient}, Tarih: ${appointment.date}, Saat: ${appointment.time}, Not: ${appointment.notes}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteAppointment(i);
+        li.appendChild(deleteBtn);
+        appointmentList.appendChild(li);
+      });
+    }
+    function deleteAppointment(index) {
+      let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      appointments.splice(index, 1);
+      localStorage.setItem('appointments', JSON.stringify(appointments));
+      loadAppointments();
+    }
+    function saveTreatment() {
+      let patient = document.getElementById('treatmentPatient').value;
+      let treatmentDate = document.getElementById('treatmentDate').value;
+      let treatmentTime = document.getElementById('treatmentTime').value;
+      let notes = document.getElementById('treatmentNotes').value;
+      let agreedAmount = parseFloat(document.getElementById('treatmentAgreedAmount').value) || 0;
+      let treatments = JSON.parse(localStorage.getItem('treatments')) || [];
+      treatments.push({ patient, date: treatmentDate, time: treatmentTime, notes, agreedAmount });
+      localStorage.setItem('treatments', JSON.stringify(treatments));
+      loadTreatments();
+    }
+    function loadTreatments() {
+      let treatments = JSON.parse(localStorage.getItem('treatments')) || [];
+      let treatmentList = document.getElementById('treatmentList');
+      treatmentList.innerHTML = '';
+      let start = Math.max(0, treatments.length - 10);
+      for (let i = start; i < treatments.length; i++) {
+        let treatment = treatments[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${treatment.patient}, Tarih: ${treatment.date}, Saat: ${treatment.time}, Not: ${treatment.notes}` +
+          (treatment.agreedAmount ? `, Anlaşılan Tutar: ${treatment.agreedAmount} TL` : "");
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteTreatment(i);
+        li.appendChild(deleteBtn);
+        treatmentList.appendChild(li);
+      }
+    }
+    function filterTreatments() {
+      let searchTerm = document.getElementById('treatmentSearch').value.toLowerCase();
+      let treatments = JSON.parse(localStorage.getItem('treatments')) || [];
+      let filteredIndices = [];
+      treatments.forEach((treatment, index) => {
+        if (
+          treatment.patient.toLowerCase().includes(searchTerm) ||
+          treatment.date.includes(searchTerm) ||
+          treatment.time.includes(searchTerm) ||
+          treatment.notes.toLowerCase().includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let treatmentList = document.getElementById('treatmentList');
+      treatmentList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let treatment = treatments[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${treatment.patient}, Tarih: ${treatment.date}, Saat: ${treatment.time}, Not: ${treatment.notes}` +
+          (treatment.agreedAmount ? `, Anlaşılan Tutar: ${treatment.agreedAmount} TL` : "");
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteTreatment(i);
+        li.appendChild(deleteBtn);
+        treatmentList.appendChild(li);
+      });
+    }
+    function deleteTreatment(index) {
+      let treatments = JSON.parse(localStorage.getItem('treatments')) || [];
+      treatments.splice(index, 1);
+      localStorage.setItem('treatments', JSON.stringify(treatments));
+      loadTreatments();
+    }
+    function saveDentist() {
+      let name = document.getElementById('dentistName').value;
+      let specialty = document.getElementById('specialty').value;
+      let dentists = JSON.parse(localStorage.getItem('dentists')) || [];
+      dentists.push({ name, specialty });
+      localStorage.setItem('dentists', JSON.stringify(dentists));
+      loadDentists();
+      updateDentistSelect();
+    }
+    function loadDentists() {
+      let dentists = JSON.parse(localStorage.getItem('dentists')) || [];
+      let dentistList = document.getElementById('dentistList');
+      dentistList.innerHTML = '';
+      let start = Math.max(0, dentists.length - 10);
+      for (let i = start; i < dentists.length; i++) {
+        let dentist = dentists[i];
+        let li = document.createElement('li');
+        li.textContent = `${dentist.name} - ${dentist.specialty}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteDentist(i);
+        li.appendChild(deleteBtn);
+        dentistList.appendChild(li);
+      }
+    }
+    function filterDentists() {
+      let searchTerm = document.getElementById('dentistSearch').value.toLowerCase();
+      let dentists = JSON.parse(localStorage.getItem('dentists')) || [];
+      let filteredIndices = [];
+      dentists.forEach((dentist, index) => {
+        if (
+          dentist.name.toLowerCase().includes(searchTerm) ||
+          dentist.specialty.toLowerCase().includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let dentistList = document.getElementById('dentistList');
+      dentistList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let dentist = dentists[i];
+        let li = document.createElement('li');
+        li.textContent = `${dentist.name} - ${dentist.specialty}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteDentist(i);
+        li.appendChild(deleteBtn);
+        dentistList.appendChild(li);
+      });
+    }
+    function deleteDentist(index) {
+      let dentists = JSON.parse(localStorage.getItem('dentists')) || [];
+      dentists.splice(index, 1);
+      localStorage.setItem('dentists', JSON.stringify(dentists));
+      loadDentists();
+    }
+    function updateDentistSelect() {
+      let dentists = JSON.parse(localStorage.getItem('dentists')) || [];
+      let invoiceDentistSelect = document.getElementById('invoiceDentist');
+      invoiceDentistSelect.innerHTML = '';
+      dentists.forEach((dentist) => {
+        let option = document.createElement('option');
+        option.value = dentist.name;
+        option.textContent = dentist.name;
+        invoiceDentistSelect.appendChild(option);
+      });
+    }
+    function saveTreatmentPrice() {
+      let treatmentName = document.getElementById('treatmentName').value;
+      let treatmentPrice = document.getElementById('treatmentPrice').value;
+      let treatments = JSON.parse(localStorage.getItem('treatmentsPricing')) || [];
+      treatments.push({ treatmentName, treatmentPrice });
+      localStorage.setItem('treatmentsPricing', JSON.stringify(treatments));
+      loadTreatmentsPricing();
+    }
+    function loadTreatmentsPricing() {
+      let treatments = JSON.parse(localStorage.getItem('treatmentsPricing')) || [];
+      let treatmentList = document.getElementById('treatmentPricingList');
+      treatmentList.innerHTML = '';
+      let start = Math.max(0, treatments.length - 10);
+      for (let i = start; i < treatments.length; i++) {
+        let treatment = treatments[i];
+        let li = document.createElement('li');
+        li.textContent = `${treatment.treatmentName} - ${treatment.treatmentPrice} TL`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteTreatmentPricing(i);
+        li.appendChild(deleteBtn);
+        treatmentList.appendChild(li);
+      }
+    }
+    function filterTreatmentPricing() {
+      let searchTerm = document.getElementById('treatmentPricingSearch').value.toLowerCase();
+      let treatments = JSON.parse(localStorage.getItem('treatmentsPricing')) || [];
+      let filteredIndices = [];
+      treatments.forEach((treatment, index) => {
+        if (
+          treatment.treatmentName.toLowerCase().includes(searchTerm) ||
+          treatment.treatmentPrice.toString().includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let treatmentList = document.getElementById('treatmentPricingList');
+      treatmentList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let treatment = treatments[i];
+        let li = document.createElement('li');
+        li.textContent = `${treatment.treatmentName} - ${treatment.treatmentPrice} TL`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteTreatmentPricing(i);
+        li.appendChild(deleteBtn);
+        treatmentList.appendChild(li);
+      });
+    }
+    function deleteTreatmentPricing(index) {
+      let treatments = JSON.parse(localStorage.getItem('treatmentsPricing')) || [];
+      treatments.splice(index, 1);
+      localStorage.setItem('treatmentsPricing', JSON.stringify(treatments));
+      loadTreatmentsPricing();
+    }
+    function saveInvoice() {
+      let patient = document.getElementById('invoicePatient').value;
+      let dentist = document.getElementById('invoiceDentist').value;
+      let treatment = document.getElementById('invoiceTreatment').value;
+      let quantity = parseInt(document.getElementById('invoiceQuantity').value);
+      let invoiceDate = document.getElementById('invoiceDate').value;
+      let discountPercentage = parseFloat(document.getElementById('discountPercentage').value) || 0;
+      let discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+      let treatmentPrice = getTreatmentPrice(treatment);
+      let totalAmount = treatmentPrice * quantity;
+      if (discountPercentage > 0) { totalAmount = totalAmount * (1 - discountPercentage / 100); }
+      if (discountAmount > 0) { totalAmount -= discountAmount; }
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      invoices.push({ patient, dentist, treatment, price: treatmentPrice, quantity, totalAmount, date: invoiceDate, discountPercentage, discountAmount });
+      localStorage.setItem('invoices', JSON.stringify(invoices));
+      loadInvoices();
+      updateBalanceList();
+    }
+    function getTreatmentPrice(treatmentName) {
+      let treatments = JSON.parse(localStorage.getItem('treatmentsPricing')) || [];
+      let selectedTreatment = treatments.find(treatment => treatment.treatmentName === treatmentName);
+      return selectedTreatment ? parseFloat(selectedTreatment.treatmentPrice) : 0;
+    }
+    function loadInvoices() {
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      let invoiceList = document.getElementById('invoiceList');
+      invoiceList.innerHTML = '';
+      let start = Math.max(0, invoices.length - 10);
+      for (let i = start; i < invoices.length; i++) {
+        let invoice = invoices[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${invoice.patient}, Diş Hekimi: ${invoice.dentist}, İşlem: ${invoice.treatment}, Miktar: ${invoice.quantity}, Tutar: ${invoice.totalAmount} TL, Tarih: ${invoice.date}, İskonto: %${invoice.discountPercentage}, İskonto Tutarı: ${invoice.discountAmount} TL`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteInvoice(i);
+        li.appendChild(deleteBtn);
+        invoiceList.appendChild(li);
+      }
+    }
+    function filterInvoices() {
+      let searchTerm = document.getElementById('invoiceSearch').value.toLowerCase();
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      let filteredIndices = [];
+      invoices.forEach((invoice, index) => {
+        if (
+          invoice.patient.toLowerCase().includes(searchTerm) ||
+          invoice.dentist.toLowerCase().includes(searchTerm) ||
+          invoice.treatment.toLowerCase().includes(searchTerm) ||
+          invoice.totalAmount.toString().includes(searchTerm) ||
+          invoice.date.includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let invoiceList = document.getElementById('invoiceList');
+      invoiceList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let invoice = invoices[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${invoice.patient}, Diş Hekimi: ${invoice.dentist}, İşlem: ${invoice.treatment}, Miktar: ${invoice.quantity}, Tutar: ${invoice.totalAmount} TL, Tarih: ${invoice.date}, İskonto: %${invoice.discountPercentage}, İskonto Tutarı: ${invoice.discountAmount} TL`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deleteInvoice(i);
+        li.appendChild(deleteBtn);
+        invoiceList.appendChild(li);
+      });
+    }
+    function deleteInvoice(index) {
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      invoices.splice(index, 1);
+      localStorage.setItem('invoices', JSON.stringify(invoices));
+      loadInvoices();
+      updateBalanceList();
+    }
+    function savePayment() {
+      let patient = document.getElementById('paymentPatient').value;
+      let paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+      let paymentDate = document.getElementById('paymentDate').value;
+      let paymentType = document.getElementById('paymentType').value;
+      let installmentCount = document.getElementById('installmentCount').value;
+      let payments = JSON.parse(localStorage.getItem('payments')) || [];
+      payments.push({ patient, amount: paymentAmount, date: paymentDate, type: paymentType, installments: installmentCount });
+      localStorage.setItem('payments', JSON.stringify(payments));
+      loadPayments();
+      updateBalanceList();
+    }
+    function loadPayments() {
+      let payments = JSON.parse(localStorage.getItem('payments')) || [];
+      let paymentList = document.getElementById('paymentList');
+      paymentList.innerHTML = '';
+      let start = Math.max(0, payments.length - 10);
+      for (let i = start; i < payments.length; i++) {
+        let payment = payments[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${payment.patient}, Tutar: ${payment.amount} TL, Tarih: ${payment.date}, Ödeme Tipi: ${payment.type}, Taksit Sayısı: ${payment.installments}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deletePayment(i);
+        li.appendChild(deleteBtn);
+        paymentList.appendChild(li);
+      }
+    }
+    function filterPayments() {
+      let searchTerm = document.getElementById('paymentSearch').value.toLowerCase();
+      let payments = JSON.parse(localStorage.getItem('payments')) || [];
+      let filteredIndices = [];
+      payments.forEach((payment, index) => {
+        if (
+          payment.patient.toLowerCase().includes(searchTerm) ||
+          payment.amount.toString().includes(searchTerm) ||
+          payment.date.includes(searchTerm) ||
+          payment.type.toLowerCase().includes(searchTerm) ||
+          payment.installments.toString().includes(searchTerm)
+        ) {
+          filteredIndices.push(index);
+        }
+      });
+      filteredIndices = filteredIndices.slice(-10);
+      let paymentList = document.getElementById('paymentList');
+      paymentList.innerHTML = '';
+      filteredIndices.forEach(i => {
+        let payment = payments[i];
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${payment.patient}, Tutar: ${payment.amount} TL, Tarih: ${payment.date}, Ödeme Tipi: ${payment.type}, Taksit Sayısı: ${payment.installments}`;
+        let deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Sil';
+        deleteBtn.onclick = () => deletePayment(i);
+        li.appendChild(deleteBtn);
+        paymentList.appendChild(li);
+      });
+    }
+    function deletePayment(index) {
+      let payments = JSON.parse(localStorage.getItem('payments')) || [];
+      payments.splice(index, 1);
+      localStorage.setItem('payments', JSON.stringify(payments));
+      loadPayments();
+      updateBalanceList();
+    }
+    function updateBalanceList() {
+      let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+      let payments = JSON.parse(localStorage.getItem('payments')) || [];
+      let treatments = JSON.parse(localStorage.getItem('treatments')) || [];
+      let balanceList = document.getElementById('balanceList');
+      balanceList.innerHTML = '';
+      let balanceMap = {};
+      invoices.forEach(invoice => {
+        if (!balanceMap[invoice.patient]) {
+          balanceMap[invoice.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+        }
+        balanceMap[invoice.patient].totalInvoice += invoice.totalAmount || 0;
+      });
+      payments.forEach(payment => {
+        if (!balanceMap[payment.patient]) {
+          balanceMap[payment.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+        }
+        balanceMap[payment.patient].totalPayment += payment.amount || 0;
+      });
+      treatments.forEach(treatment => {
+        if (!balanceMap[treatment.patient]) {
+          balanceMap[treatment.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+        }
+        balanceMap[treatment.patient].totalAgreed += parseFloat(treatment.agreedAmount) || 0;
+      });
+      for (let patient in balanceMap) {
+        let remainingBalance = balanceMap[patient].totalInvoice + balanceMap[patient].totalAgreed - balanceMap[patient].totalPayment;
+        let li = document.createElement('li');
+        li.textContent = `Hasta: ${patient}, Anlaşılan: ${balanceMap[patient].totalAgreed} TL, Fatura: ${balanceMap[patient].totalInvoice} TL, Ödenen: ${balanceMap[patient].totalPayment} TL, Kalan: ${remainingBalance} TL`;
+        balanceList.appendChild(li);
+      }
+    }
+    function changeTheme() {
+      const themeSelector = document.getElementById('themeSelector');
+      const selectedTheme = themeSelector.value;
+      const themeClasses = ["theme-light", "theme-dark", "theme-blue", "theme-green", "theme-corporate", "theme-midnight"];
+      themeClasses.forEach(cls => document.body.classList.remove(cls));
+      document.body.classList.add("theme-" + selectedTheme);
+      localStorage.setItem('theme', selectedTheme);
+    }
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      const themeSelector = document.getElementById('themeSelector');
+      themeSelector.value = savedTheme;
+      changeTheme();
+    }
+    
+    /* ---------------------------
+       Diş Not Sistemi (Randevu Takibi Altında)
+    --------------------------- */
+    let toothNotes = {};
+    let selectedToothForNote = null;
+    let selectedToothNotePatient = null;
+    const toothOrder = [
+      [18,17,16,15,14,13,12,11, null, 21,22,23,24,25,26,27,28],
+      [48,47,46,45,44,43,42,41, null, 31,32,33,34,35,36,37,38]
+    ];
+    function loadToothNotes() {
+      let stored = localStorage.getItem("toothNotes");
+      if(stored) {
+         toothNotes = JSON.parse(stored);
+      }
+    }
+    function saveToothNotes() {
+      localStorage.setItem("toothNotes", JSON.stringify(toothNotes));
+    }
+    function updateSelectedToothNotePatient() {
+      selectedToothNotePatient = document.getElementById('appointmentPatient').value;
+    }
+    function createToothNotesGrid() {
+      const container = document.getElementById('toothNotesContainer');
+      container.innerHTML = '';
+      toothOrder.forEach(row => {
+        row.forEach(toothNum => {
+          if(toothNum === null) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-space';
+            container.appendChild(empty);
+          } else {
+            const tooth = document.createElement('div');
+            tooth.className = 'tooth';
+            tooth.textContent = toothNum;
+            tooth.dataset.toothId = toothNum;
+            if(selectedToothNotePatient && toothNotes[selectedToothNotePatient] && toothNotes[selectedToothNotePatient][toothNum]) {
+              tooth.classList.add('has-note');
+            }
+            tooth.addEventListener('click', () => handleToothNoteClick(toothNum));
+            container.appendChild(tooth);
+          }
+        });
+      });
+    }
+    function handleToothNoteClick(toothNum) {
+      selectedToothForNote = toothNum;
+      showToothNoteModal(toothNum);
+    }
+    function showToothNoteModal(toothNum) {
+      const modal = document.getElementById('toothNoteModalOverlay');
+      const modalTitle = document.getElementById('toothNoteModalTitle');
+      const noteInput = document.getElementById('toothNoteInput');
+      modalTitle.textContent = toothNum + ' Numaralı Diş İçin Not';
+      if(selectedToothNotePatient && toothNotes[selectedToothNotePatient] && toothNotes[selectedToothNotePatient][toothNum]) {
+        noteInput.value = toothNotes[selectedToothNotePatient][toothNum];
+      } else {
+        noteInput.value = '';
+      }
+      modal.style.display = 'flex';
+    }
+    function closeToothNoteModal() {
+      document.getElementById('toothNoteModalOverlay').style.display = 'none';
+      selectedToothForNote = null;
+    }
+    function saveToothNote() {
+      const note = document.getElementById('toothNoteInput').value.trim();
+      if(selectedToothNotePatient && selectedToothForNote) {
+        if(!toothNotes[selectedToothNotePatient]) {
+          toothNotes[selectedToothNotePatient] = {};
+        }
+        toothNotes[selectedToothNotePatient][selectedToothForNote] = note;
+        saveToothNotes();
+        createToothNotesGrid();
+        updateToothNotesList();
+      }
+      closeToothNoteModal();
+    }
+    function updateToothNotesList() {
+      const list = document.getElementById('toothNotesList');
+      list.innerHTML = '';
+      if(selectedToothNotePatient && toothNotes[selectedToothNotePatient]) {
+        Object.entries(toothNotes[selectedToothNotePatient]).forEach(([toothNum, note]) => {
+          if(note) {
+            const li = document.createElement('li');
+            li.textContent = toothNum + ': ' + note;
+            list.appendChild(li);
+          }
+        });
+      }
+    }
+    function updateToothNotesDisplay() {
+      updateSelectedToothNotePatient();
+      createToothNotesGrid();
+      updateToothNotesList();
+    }
+    
+    /* ---------------------------
+       Diş Not Sistemi (Tedavi Takibi Altında)
+    --------------------------- */
+    let selectedTreatmentToothNotePatient = null;
+    let selectedTreatmentToothForNote = null;
+    function updateTreatmentSelectedToothNotePatient() {
+      selectedTreatmentToothNotePatient = document.getElementById('treatmentPatient').value;
+    }
+    function createTreatmentToothNotesGrid() {
+      const container = document.getElementById('treatmentToothNotesContainer');
+      container.innerHTML = '';
+      toothOrder.forEach(row => {
+        row.forEach(toothNum => {
+          if(toothNum === null) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-space';
+            container.appendChild(empty);
+          } else {
+            const tooth = document.createElement('div');
+            tooth.className = 'tooth';
+            tooth.textContent = toothNum;
+            tooth.dataset.toothId = toothNum;
+            if(selectedTreatmentToothNotePatient && toothNotes[selectedTreatmentToothNotePatient] && toothNotes[selectedTreatmentToothNotePatient][toothNum]) {
+              tooth.classList.add('has-note');
+            }
+            tooth.addEventListener('click', () => handleTreatmentToothNoteClick(toothNum));
+            container.appendChild(tooth);
+          }
+        });
+      });
+    }
+    function handleTreatmentToothNoteClick(toothNum) {
+      selectedTreatmentToothForNote = toothNum;
+      showTreatmentToothNoteModal(toothNum);
+    }
+    function showTreatmentToothNoteModal(toothNum) {
+      const modal = document.getElementById('treatmentToothNoteModalOverlay');
+      const modalTitle = document.getElementById('treatmentToothNoteModalTitle');
+      const noteInput = document.getElementById('treatmentToothNoteInput');
+      modalTitle.textContent = toothNum + ' Numaralı Diş İçin Not';
+      if(selectedTreatmentToothNotePatient && toothNotes[selectedTreatmentToothNotePatient] && toothNotes[selectedTreatmentToothNotePatient][toothNum]) {
+        noteInput.value = toothNotes[selectedTreatmentToothNotePatient][toothNum];
+      } else {
+        noteInput.value = '';
+      }
+      modal.style.display = 'flex';
+    }
+    function closeTreatmentToothNoteModal() {
+      document.getElementById('treatmentToothNoteModalOverlay').style.display = 'none';
+      selectedTreatmentToothForNote = null;
+    }
+    function saveTreatmentToothNote() {
+      const note = document.getElementById('treatmentToothNoteInput').value.trim();
+      if(selectedTreatmentToothNotePatient && selectedTreatmentToothForNote) {
+        if(!toothNotes[selectedTreatmentToothNotePatient]) {
+          toothNotes[selectedTreatmentToothNotePatient] = {};
+        }
+        toothNotes[selectedTreatmentToothNotePatient][selectedTreatmentToothForNote] = note;
+        saveToothNotes();
+        createTreatmentToothNotesGrid();
+        updateTreatmentToothNotesList();
+      }
+      closeTreatmentToothNoteModal();
+    }
+    function updateTreatmentToothNotesList() {
+      const list = document.getElementById('treatmentToothNotesList');
+      list.innerHTML = '';
+      if(selectedTreatmentToothNotePatient && toothNotes[selectedTreatmentToothNotePatient]) {
+        Object.entries(toothNotes[selectedTreatmentToothNotePatient]).forEach(([toothNum, note]) => {
+          if(note) {
+            const li = document.createElement('li');
+            li.textContent = toothNum + ': ' + note;
+            list.appendChild(li);
+          }
+        });
+      }
+    }
+    function updateTreatmentToothNotesDisplay() {
+      updateTreatmentSelectedToothNotePatient();
+      createTreatmentToothNotesGrid();
+      updateTreatmentToothNotesList();
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('toothNoteCloseModal').addEventListener('click', closeToothNoteModal);
+      document.getElementById('toothNoteCancelBtn').addEventListener('click', closeToothNoteModal);
+      document.getElementById('toothNoteSaveBtn').addEventListener('click', saveToothNote);
+      document.getElementById('toothNoteModalOverlay').addEventListener('click', (e) => {
+        if(e.target === document.getElementById('toothNoteModalOverlay')) closeToothNoteModal();
+      });
+      document.getElementById('treatmentToothNoteCloseModal').addEventListener('click', closeTreatmentToothNoteModal);
+      document.getElementById('treatmentToothNoteCancelBtn').addEventListener('click', closeTreatmentToothNoteModal);
+      document.getElementById('treatmentToothNoteSaveBtn').addEventListener('click', saveTreatmentToothNote);
+      document.getElementById('treatmentToothNoteModalOverlay').addEventListener('click', (e) => {
+        if(e.target === document.getElementById('treatmentToothNoteModalOverlay')) closeTreatmentToothNoteModal();
+      });
+    });
+    window.addEventListener("load", function() {
+      loadPatients();
+      loadDentists();
+      loadTreatmentsPricing();
+      loadAppointments();
+      loadTreatments();
+      loadInvoices();
+      loadPayments();
+      updatePatientSelect();
+      updateDentistSelect();
+      updateTreatmentSelectInInvoice();
+      updateBalanceList();
+      document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+      loadTheme();
+      loadToothNotes();
+      updateSelectedToothNotePatient();
+      createToothNotesGrid();
+      updateToothNotesList();
+      document.getElementById('appointmentPatient').addEventListener('change', function() {
+        updateSelectedToothNotePatient();
+        createToothNotesGrid();
+        updateToothNotesList();
+      });
+      document.getElementById('treatmentPatient').addEventListener('change', function() {
+        updateTreatmentToothNotesDisplay();
+      });
+      updateTreatmentToothNotesDisplay();
+      openTab('appointmentsTab', document.querySelector('#sidebar ul li:nth-child(3)'));
+      showAppointmentList();
+    });
+    
+    /* ---------------------------
+       Ayarlar (Export/Import LocalStorage)
+    --------------------------- */
+     function exportLocalStorage() {
+    let data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      let key = localStorage.key(i);
+      data[key] = localStorage.getItem(key);
+    }
+    const jsonData = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'localStorageBackup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('Veriler başarıyla indirildi!');
+  }
+    function importLocalStorage(event) {
+      let file = event.target.files[0];
+      if(!file) return;
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          let importedData = JSON.parse(e.target.result);
+          for(let key in importedData) {
+            localStorage.setItem(key, importedData[key]);
+          }
+          alert('LocalStorage başarıyla içe aktarıldı!');
+          exportLocalStorage();
+          location.reload();
+        } catch(err) {
+          alert('Veriler içe aktarılırken hata oluştu: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+    
+    /* ---------------------------
+       Raporlar (Yeni)
+    --------------------------- */
+    var selectedReport = '';
+    function selectReport(reportKey) {
+      selectedReport = reportKey;
+      var reportTitle = '';
+      switch(reportKey) {
+        case 'patients': reportTitle = "Hasta Listesi Raporu"; break;
+        case 'toothNotes': reportTitle = "Diş Notları Raporu"; break;
+        case 'appointments': reportTitle = "Randevu Listesi Raporu"; break;
+        case 'treatments': reportTitle = "Tedavi Takibi Raporu"; break;
+        case 'invoices': reportTitle = "Fatura Listesi Raporu"; break;
+        case 'payments': reportTitle = "Ödeme Listesi Raporu"; break;
+        case 'balance': reportTitle = "Cari Bakiye Raporu"; break;
+      }
+      document.getElementById("reportTitle").textContent = reportTitle;
+      document.getElementById("reportSelection").style.display = "none";
+      document.getElementById("reportDetail").style.display = "block";
+    }
+    function runReport() {
+      var filterText = document.getElementById("reportFilter").value.toLowerCase();
+      var resultList = document.getElementById("reportResult");
+      resultList.innerHTML = '';
+      var data = [];
+      if(selectedReport === 'patients'){
+        data = JSON.parse(localStorage.getItem("patients")) || [];
+        data = data.map(function(item){
+          return item.firstName + " " + item.lastName + " (" + item.tc + ")";
+        });
+      } else if(selectedReport === 'toothNotes'){
+        var notesObj = JSON.parse(localStorage.getItem("toothNotes")) || {};
+        for(var patient in notesObj) {
+          for(var tooth in notesObj[patient]) {
+             var note = notesObj[patient][tooth];
+             data.push(patient + " - Diş " + tooth + ": " + note);
+          }
+        }
+      } else if(selectedReport === 'appointments'){
+        data = JSON.parse(localStorage.getItem("appointments")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.date + " " + item.time + " - " + item.notes;
+        });
+      } else if(selectedReport === 'treatments'){
+        data = JSON.parse(localStorage.getItem("treatments")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.date + " - " + item.notes + " - Anlaşılan Tutar: " + item.agreedAmount + " TL";
+        });
+      } else if(selectedReport === 'invoices'){
+        data = JSON.parse(localStorage.getItem("invoices")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.treatment + " - Tutar: " + item.totalAmount + " TL - " + item.date;
+        });
+      } else if(selectedReport === 'payments'){
+        data = JSON.parse(localStorage.getItem("payments")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.amount + " TL - " + item.date + " - " + item.type;
+        });
+      } else if(selectedReport === 'balance'){
+        var invoices = JSON.parse(localStorage.getItem("invoices")) || [];
+        var payments = JSON.parse(localStorage.getItem("payments")) || [];
+        var treatments = JSON.parse(localStorage.getItem("treatments")) || [];
+        var balanceMap = {};
+        invoices.forEach(function(invoice) {
+          if(!balanceMap[invoice.patient]) balanceMap[invoice.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+          balanceMap[invoice.patient].totalInvoice += invoice.totalAmount || 0;
+        });
+        payments.forEach(function(payment) {
+          if(!balanceMap[payment.patient]) balanceMap[payment.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+          balanceMap[payment.patient].totalPayment += payment.amount || 0;
+        });
+        treatments.forEach(function(treatment) {
+          if(!balanceMap[treatment.patient]) balanceMap[treatment.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+          balanceMap[treatment.patient].totalAgreed += parseFloat(treatment.agreedAmount) || 0;
+        });
+        for(var patient in balanceMap) {
+          var remaining = balanceMap[patient].totalInvoice + balanceMap[patient].totalAgreed - balanceMap[patient].totalPayment;
+          data.push("Hasta: " + patient + ", Fatura: " + balanceMap[patient].totalInvoice + " TL, Anlaşılan: " + balanceMap[patient].totalAgreed + " TL, Ödenen: " + balanceMap[patient].totalPayment + " TL, Kalan: " + remaining + " TL");
+        }
+      }
+      var filteredData = data.filter(function(item){
+         return item.toLowerCase().includes(filterText);
+      });
+      filteredData.forEach(function(item){
+         var li = document.createElement("li");
+         li.textContent = item;
+         resultList.appendChild(li);
+      });
+    }
+    function backToReportSelection() {
+      document.getElementById("reportDetail").style.display = "none";
+      document.getElementById("reportSelection").style.display = "block";
+      document.getElementById("reportFilter").value = "";
+      document.getElementById("reportResult").innerHTML = "";
+    }
+    document.getElementById("reportFilter").addEventListener("input", runReport);
+  </script>
+</head>
+<body class="theme-light">
+  <!-- Üst Tema Seçici -->
+  <div class="theme-selector">
+    <select id="themeSelector" onchange="changeTheme()">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="blue">Blue</option>
+      <option value="green">Green</option>
+      <option value="corporate">Corporate</option>
+      <option value="midnight">Midnight</option>
+    </select>
+  </div>
+
+<!-- Kullanıcı Giriş Ekranı -->
+<!-- Kullanıcı Giriş Ekranı -->
+<div id="loginOverlay" style="display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 10000;">
+  <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+    <h2>ERSAN Diş Hekimi Takip Sistemi</h2>
+    <form onsubmit="event.preventDefault(); login();">
+      <input type="text" id="username" placeholder="Kullanıcı Adı" required><br><br>
+      <input type="password" id="password" placeholder="Şifre" required><br><br>
+      <button type="submit">Giriş Yap</button>
+    </form>
+  </div>
+</div>
+
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar">
+    <ul>
+      <li onclick="openTab('homeTab', this)"><i class="fa fa-home"></i><span>Ana Sayfa</span></li>
+      <li onclick="openTab('patientsTab', this)"><i class="fa fa-user"></i><span>Hastalar</span></li>
+      <li onclick="openTab('dentistsTab', this)"><i class="fa fa-user-md"></i><span>Diş Hekimleri</span></li>
+      <li onclick="openTab('appointmentsTab', this)"><i class="fa fa-calendar"></i><span>Randevu Takibi</span></li>
+      <li onclick="openTab('treatmentsTab', this)"><i class="fa fa-stethoscope"></i><span>Tedavi Takibi</span></li>
+      <li onclick="openTab('treatmentPricingTab', this)"><i class="fa fa-money-bill-wave"></i><span>İşlem ve Fiyat Ekle</span></li>
+      <li onclick="openTab('invoiceTab', this)"><i class="fa fa-file-invoice"></i><span>Fatura</span></li>
+      <li onclick="openTab('paymentTab', this)"><i class="fa fa-credit-card"></i><span>Ödeme</span></li>
+      <li onclick="openTab('balanceTab', this)"><i class="fa fa-balance-scale"></i><span>Bakiye</span></li>
+      <li onclick="openTab('reportsTab', this)"><i class="fa fa-chart-bar"></i><span>Raporlar</span></li>
+      <li onclick="openTab('settingsTab', this)"><i class="fa fa-cogs"></i><span>Ayarlar</span></li>
+    </ul>
+  </div>
+
+
+
+
+  <!-- Main İçerik Alanı -->
+  <div class="main-content">
+    <header>
+      <button id="sidebarToggle" onclick="toggleSidebar()" style="background:none; border:none; color:#fff; font-size:1.5em; margin-right:10px;">
+        <i class="fa fa-bars"></i>
+      </button>
+      <h1>ERSAN Diş Hekimi Takip Sistemi</h1>
+    </header>
+
+
+  <div class="main-content">
+    <!-- ANA SAYFA SEKMESİ İÇERİĞİ -->
+    <section id="homeTab" class="tab-content">
+      <h2>Ana Sayfa</h2>
+      <p>Hoş geldiniz! Buradan sistemin tüm özelliklerine erişebilirsiniz.</p>
+    </section>
+    <!-- ... DİĞER ORİJİNAL ANA İÇERİK ... -->
+  </div>
+
+    <!-- Hastalar Sekmesi -->
+    <section id="patientsTab" class="tab-content">
+      <h2>Hasta Ekle</h2>
+      <form onsubmit="event.preventDefault(); savePatient();">
+        <input type="text" id="patientFirstName" placeholder="Ad" required>
+        <input type="text" id="patientLastName" placeholder="Soyad" required>
+        <input type="text" id="patientTc" placeholder="Tc Numarası" required>
+        <input type="number" id="patientAge" placeholder="Yaş" required>
+        <input type="date" id="patientDOB" required>
+        <input type="text" id="patientPhone" placeholder="Telefon" required>
+        <input type="text" id="patientNotes" placeholder="Notlar">
+        <button type="submit">Ekle</button>
+      </form>
+      <h2>Hastalar</h2>
+      <div class="search-box">
+        <input type="text" id="patientSearch" placeholder="Hasta Ara..." oninput="filterPatients()">
+      </div>
+      <ul id="patientList"></ul>
+    </section>
+    <!-- Diş Hekimleri Sekmesi -->
+    <section id="dentistsTab" class="tab-content">
+      <h2>Diş Hekimi Ekle</h2>
+      <form onsubmit="event.preventDefault(); saveDentist();">
+        <input type="text" id="dentistName" placeholder="Diş Hekimi Adı" required>
+        <input type="text" id="specialty" placeholder="Uzmanlık Alanı" required>
+        <button type="submit">Ekle</button>
+      </form>
+      <h2>Diş Hekimleri</h2>
+      <div class="search-box">
+        <input type="text" id="dentistSearch" placeholder="Diş Hekimi Ara..." oninput="filterDentists()">
+      </div>
+      <ul id="dentistList"></ul>
+    </section>
+    <!-- Randevu Takibi Sekmesi -->
+    <section id="appointmentsTab" class="tab-content">
+      <h2>Randevu Takibi</h2>
+      <form onsubmit="event.preventDefault(); saveAppointment();">
+        <label for="appointmentPatient">Hasta Seçin:</label>
+        <select id="appointmentPatient" required></select>
+        <input type="date" id="appointmentDate" required>
+        <input type="time" id="appointmentTime" required>
+        <input type="text" id="appointmentNotes" placeholder="Notlar">
+        <button type="submit">Randevuyu Kaydet</button>
+      </form>
+      <div class="view-toggle">
+        <button id="listViewBtn" onclick="showAppointmentList()">Liste Görünümü</button>
+        <button id="calendarViewBtn" onclick="showAppointmentCalendar()">Takvim Görünümü</button>
+      </div>
+      <div id="appointmentListContainer">
+        <div class="search-box">
+          <input type="text" id="appointmentSearch" placeholder="Randevu Ara..." oninput="filterAppointments()">
+        </div>
+        <ul id="appointmentList"></ul>
+      </div>
+      <div id="appointmentCalendarContainer" style="display: none;">
+        <div id="appointmentCalendar"></div>
+      </div>
+      <div id="appointmentToothNotesSection">
+        <h3>Diş Notları</h3>
+        <div class="teeth-container" id="toothNotesContainer"></div>
+        <ul id="toothNotesList"></ul>
+      </div>
+      <div class="modal-overlay" id="toothNoteModalOverlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" id="toothNoteModalTitle"></span>
+            <span class="close-modal" id="toothNoteCloseModal">&times;</span>
+          </div>
+          <textarea id="toothNoteInput" placeholder="Notunuzu buraya yazın..."></textarea>
+          <div class="modal-actions">
+            <button class="cancel-btn" id="toothNoteCancelBtn">İptal</button>
+            <button class="save-btn" id="toothNoteSaveBtn">Kaydet</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Tedavi Takibi Sekmesi -->
+    <section id="treatmentsTab" class="tab-content">
+      <div id="treatmentToothNotesPanel">
+        <h3>Diş Notları</h3>
+        <div class="teeth-container" id="treatmentToothNotesContainer"></div>
+        <ul id="treatmentToothNotesList"></ul>
+      </div>
+      <form onsubmit="event.preventDefault(); saveTreatment();">
+        <label for="treatmentPatient">Hasta Seçin:</label>
+        <select id="treatmentPatient" required></select>
+        <input type="date" id="treatmentDate" required>
+        <input type="time" id="treatmentTime" required>
+        <input type="text" id="treatmentNotes" placeholder="Notlar">
+        <input type="number" id="treatmentAgreedAmount" placeholder="Anlaşılan Tutar (TL)" step="0.01" required>
+        <button type="submit">Tedaviyi Kaydet</button>
+      </form>
+      <h2>Tedaviler</h2>
+      <div class="search-box">
+        <input type="text" id="treatmentSearch" placeholder="Tedavi Ara..." oninput="filterTreatments()">
+      </div>
+      <ul id="treatmentList"></ul>
+      <div class="modal-overlay" id="treatmentToothNoteModalOverlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" id="treatmentToothNoteModalTitle"></span>
+            <span class="close-modal" id="treatmentToothNoteCloseModal">&times;</span>
+          </div>
+          <textarea id="treatmentToothNoteInput" placeholder="Notunuzu buraya yazın..."></textarea>
+          <div class="modal-actions">
+            <button class="cancel-btn" id="treatmentToothNoteCancelBtn">İptal</button>
+            <button class="save-btn" id="treatmentToothNoteSaveBtn">Kaydet</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- İşlem ve Fiyat Ekle Sekmesi -->
+    <section id="treatmentPricingTab" class="tab-content">
+      <h2>İşlem ve Fiyat Ekle</h2>
+      <form onsubmit="event.preventDefault(); saveTreatmentPrice();">
+        <input type="text" id="treatmentName" placeholder="İşlem Adı" required>
+        <input type="number" id="treatmentPrice" placeholder="Fiyat (TL)" required>
+        <button type="submit">Ekle</button>
+      </form>
+      <h2>İşlemler ve Fiyatlar</h2>
+      <div class="search-box">
+        <input type="text" id="treatmentPricingSearch" placeholder="İşlem Ara..." oninput="filterTreatmentPricing()">
+      </div>
+      <ul id="treatmentPricingList"></ul>
+    </section>
+    <!-- Fatura Sekmesi -->
+    <section id="invoiceTab" class="tab-content">
+      <h2>Fatura Girişi</h2>
+      <form onsubmit="event.preventDefault(); saveInvoice();">
+        <label for="invoicePatient">Hasta Seçin:</label>
+        <select id="invoicePatient" required></select>
+        <label for="invoiceDentist">Diş Hekimi Seçin:</label>
+        <select id="invoiceDentist" required></select>
+        <label for="invoiceTreatment">İşlem Seçin:</label>
+        <select id="invoiceTreatment" required onchange="calculateTotalAmount()">
+          <option value="" disabled selected>İşlem Seçin</option>
+        </select>
+        <label for="invoiceQuantity">Miktar:</label>
+        <input type="number" id="invoiceQuantity" value="1" min="1" required oninput="calculateTotalAmount()">
+        <label for="discountPercentage">Yüzde İskonto (%):</label>
+        <input type="number" id="discountPercentage" value="0" min="0" oninput="calculateTotalAmount()">
+        <label for="discountAmount">Tutar İskonto (TL):</label>
+        <input type="number" id="discountAmount" value="0" min="0" oninput="calculateTotalAmount()">
+        <label for="invoiceDate">Fatura Tarihi:</label>
+        <input type="date" id="invoiceDate" required>
+        <button type="submit">Faturayı Kaydet</button>
+      </form>
+      <div id="totalAmountDisplay" class="invoice-details"></div>
+      <h2>Faturalar</h2>
+      <div class="search-box">
+        <input type="text" id="invoiceSearch" placeholder="Fatura Ara..." oninput="filterInvoices()">
+      </div>
+      <ul id="invoiceList"></ul>
+    </section>
+    <!-- Ödeme Sekmesi -->
+    <section id="paymentTab" class="tab-content">
+      <h2>Ödeme Girişi</h2>
+      <form onsubmit="event.preventDefault(); savePayment();">
+        <label for="paymentPatient">Hasta Seçin:</label>
+        <select id="paymentPatient" required></select>
+        <label for="paymentAmount">Ödeme Tutarı:</label>
+        <input type="number" id="paymentAmount" placeholder="Tutar (TL)" required>
+        <label for="paymentDate">Ödeme Tarihi:</label>
+        <input type="date" id="paymentDate" required>
+        <label for="paymentType">Ödeme Tipi:</label>
+        <select id="paymentType" required>
+          <option value="Nakit">Nakit</option>
+          <option value="Kredi Kartı">Kredi Kartı</option>
+          <option value="Havale">Havale</option>
+        </select>
+        <label for="installmentCount">Taksit Sayısı (Kredi Kartı için):</label>
+        <input type="number" id="installmentCount" min="1" placeholder="Taksit Sayısı">
+        <button type="submit">Ödemeyi Kaydet</button>
+      </form>
+      <h2>Ödemeler</h2>
+      <div class="search-box">
+        <input type="text" id="paymentSearch" placeholder="Ödeme Ara..." oninput="filterPayments()">
+      </div>
+      <ul id="paymentList"></ul>
+    </section>
+    <!-- Bakiye Özeti Sekmesi -->
+    <section id="balanceTab" class="tab-content">
+      <h2>Bakiye Özeti</h2>
+      <ul id="balanceList"></ul>
+    </section>
+    <!-- Raporlar Sekmesi (Yeni) -->
+    <section id="reportsTab" class="tab-content">
+      <h2>Raporlar</h2>
+      <div id="reportSelection">
+        <ul>
+          <li onclick="selectReport('patients')">Hasta Listesi Raporu</li>
+          <li onclick="selectReport('toothNotes')">Diş Notları Raporu</li>
+          <li onclick="selectReport('appointments')">Randevu Listesi Raporu</li>
+          <li onclick="selectReport('treatments')">Tedavi Takibi Raporu</li>
+          <li onclick="selectReport('invoices')">Fatura Listesi Raporu</li>
+          <li onclick="selectReport('payments')">Ödeme Listesi Raporu</li>
+          <li onclick="selectReport('balance')">Cari Bakiye Raporu</li>
+        </ul>
+      </div>
+      <div id="reportDetail" style="display: none;">
+        <h3 id="reportTitle"></h3>
+        <div class="search-box">
+          <input type="text" id="reportFilter" placeholder="Filtrele...">
+          <button onclick="runReport()">Raporu Çalıştır</button>
+        </div>
+        <ul id="reportResult"></ul>
+        <button onclick="backToReportSelection()">Geri</button>
+      </div>
+    </section>
+    <!-- Ayarlar Sekmesi -->
+    <section id="settingsTab" class="tab-content">
+      <h2>Ayarlar</h2>
+      <button onclick="exportLocalStorage()">Export LocalStorage</button>
+      <input type="file" id="importFile" accept=".json" onchange="importLocalStorage(event)" />
+
+<!-- Otomatik Kayıt Formu -->
+  <h2>Otomatik Kayıt Ayarları</h2>
+  <form onsubmit="event.preventDefault(); setAutoSaveInterval();">
+    <label for="filePath">Kayıt Yolu:</label>
+    <input type="text" id="filePath" placeholder="Dosya yolu girin..." required>
+    <label for="autoSaveInterval">Kayıt Aralığı (Dakika):</label>
+    <input type="number" id="autoSaveInterval" min="1" required>
+    <button type="submit">Ayarla</button>
+  </form>
+
+<h2>Yeni Kullanıcı Ekle</h2>
+  <form onsubmit="event.preventDefault(); addUser();">
+    <input type="text" id="newUsername" placeholder="Kullanıcı Adı" required>
+    <input type="password" id="newPassword" placeholder="Şifre" required>
+    <button type="submit">Kullanıcı Ekle</button>
+  </form>
+
+      <h2>LocalStorage Verisi</h2>
+      <div id="dataDisplay" class="data-display"></div>
+    </section>
+  </div>
+  
+  <!-- Yeni Raporlar Fonksiyonları (Tekrarlanan script; güncelleme yapıldı) -->
+  <script>
+    var selectedReport = '';
+    function selectReport(reportKey) {
+      selectedReport = reportKey;
+      var reportTitle = '';
+      switch(reportKey) {
+        case 'patients': reportTitle = "Hasta Listesi Raporu"; break;
+        case 'toothNotes': reportTitle = "Diş Notları Raporu"; break;
+        case 'appointments': reportTitle = "Randevu Listesi Raporu"; break;
+        case 'treatments': reportTitle = "Tedavi Takibi Raporu"; break;
+        case 'invoices': reportTitle = "Fatura Listesi Raporu"; break;
+        case 'payments': reportTitle = "Ödeme Listesi Raporu"; break;
+        case 'balance': reportTitle = "Cari Bakiye Raporu"; break;
+      }
+      document.getElementById("reportTitle").textContent = reportTitle;
+      document.getElementById("reportSelection").style.display = "none";
+      document.getElementById("reportDetail").style.display = "block";
+    }
+    function runReport() {
+      var filterText = document.getElementById("reportFilter").value.toLowerCase();
+      var resultList = document.getElementById("reportResult");
+      resultList.innerHTML = '';
+      var data = [];
+      if(selectedReport === 'patients'){
+        data = JSON.parse(localStorage.getItem("patients")) || [];
+        data = data.map(function(item){
+          return item.firstName + " " + item.lastName + " (" + item.tc + ")";
+        });
+      } else if(selectedReport === 'toothNotes'){
+        var notesObj = JSON.parse(localStorage.getItem("toothNotes")) || {};
+        for(var patient in notesObj) {
+          for(var tooth in notesObj[patient]) {
+             var note = notesObj[patient][tooth];
+             data.push(patient + " - Diş " + tooth + ": " + note);
+          }
+        }
+      } else if(selectedReport === 'appointments'){
+        data = JSON.parse(localStorage.getItem("appointments")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.date + " " + item.time + " - " + item.notes;
+        });
+      } else if(selectedReport === 'treatments'){
+        data = JSON.parse(localStorage.getItem("treatments")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.date + " - " + item.notes + " - Anlaşılan Tutar: " + item.agreedAmount + " TL";
+        });
+      } else if(selectedReport === 'invoices'){
+        data = JSON.parse(localStorage.getItem("invoices")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.treatment + " - Tutar: " + item.totalAmount + " TL - " + item.date;
+        });
+      } else if(selectedReport === 'payments'){
+        data = JSON.parse(localStorage.getItem("payments")) || [];
+        data = data.map(function(item){
+          return item.patient + " - " + item.amount + " TL - " + item.date + " - " + item.type;
+        });
+      } else if(selectedReport === 'balance'){
+        var invoices = JSON.parse(localStorage.getItem("invoices")) || [];
+        var payments = JSON.parse(localStorage.getItem("payments")) || [];
+        var treatments = JSON.parse(localStorage.getItem("treatments")) || [];
+        var balanceMap = {};
+        invoices.forEach(function(invoice) {
+          if(!balanceMap[invoice.patient]) balanceMap[invoice.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+          balanceMap[invoice.patient].totalInvoice += invoice.totalAmount || 0;
+        });
+        payments.forEach(function(payment) {
+          if(!balanceMap[payment.patient]) balanceMap[payment.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+          balanceMap[payment.patient].totalPayment += payment.amount || 0;
+        });
+        treatments.forEach(function(treatment) {
+          if(!balanceMap[treatment.patient]) balanceMap[treatment.patient] = { totalInvoice: 0, totalPayment: 0, totalAgreed: 0 };
+          balanceMap[treatment.patient].totalAgreed += parseFloat(treatment.agreedAmount) || 0;
+        });
+        for(var patient in balanceMap) {
+          var remaining = balanceMap[patient].totalInvoice + balanceMap[patient].totalAgreed - balanceMap[patient].totalPayment;
+          data.push("Hasta: " + patient + ", Fatura: " + balanceMap[patient].totalInvoice + " TL, Anlaşılan: " + balanceMap[patient].totalAgreed + " TL, Ödenen: " + balanceMap[patient].totalPayment + " TL, Kalan: " + remaining + " TL");
+        }
+      }
+      var filteredData = data.filter(function(item){
+         return item.toLowerCase().includes(filterText);
+      });
+      filteredData.forEach(function(item){
+         var li = document.createElement("li");
+         li.textContent = item;
+         resultList.appendChild(li);
+      });
+    }
+    function backToReportSelection() {
+      document.getElementById("reportDetail").style.display = "none";
+      document.getElementById("reportSelection").style.display = "block";
+      document.getElementById("reportFilter").value = "";
+      document.getElementById("reportResult").innerHTML = "";
+    }
+    document.getElementById("reportFilter").addEventListener("input", runReport);
+  </script>
+
+<script>
+  let autoSaveTimer = null;
+
+  function setAutoSaveInterval() {
+    const filePath = document.getElementById('filePath').value;
+    const interval = parseInt(document.getElementById('autoSaveInterval').value);
+    if (isNaN(interval)) {
+      alert('Geçerli bir sayı girin!');
+      return;
+    }
+    if (autoSaveTimer) {
+      clearInterval(autoSaveTimer);
+    }
+    autoSaveTimer = setInterval(() => {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        let key = localStorage.key(i);
+        data[key] = localStorage.getItem(key);
+      }
+      const jsonData = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filePath}/localStorageBackup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      alert(`Veriler ${filePath} yoluna kaydedildi!`);
+    }, interval * 60000); // Dakikayı milisaniyeye çevirir
+    alert(`Otomatik kayıt aralığı ${interval} dakika olarak ayarlandı.`);
+  }
+</script>
+
+<script>
+  async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function login() {
+    const username = document.getElementById('username').value;
+    const password = await hashPassword(document.getElementById('password').value);
+
+    // Önceden tanımlanmış kullanıcı (MEHMETERYILMAZ)
+    const predefinedUser = {
+      username: 'MEHMETERYILMAZ',
+      passwordHash: '1a215543750173d6337a51646bc5758a519d6ff3173702da408fe9d4dee2c70c' // Burada SHA-256 hash'i olmalı, örnek olarak düz metin bırakıldı.
+    };
+
+    // Diğer kullanıcılar
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+
+    // Kullanıcıyı kontrol et
+    if (
+      (username === predefinedUser.username && password === predefinedUser.passwordHash) ||
+      users.some(u => u.username === username && u.passwordHash === password)
+    ) {
+      document.getElementById('loginOverlay').style.display = 'none';
+    } else {
+      alert('Kullanıcı adı veya şifre hatalı!');
+    }
+  }
+
+  // Sayfa yüklendiğinde giriş ekranını göster
+  window.addEventListener('load', () => {
+    document.getElementById('loginOverlay').style.display = 'flex';
+  });
+</script>
+
+<script>
+  async function addUser() {
+    const username = document.getElementById('newUsername').value;
+    const password = await hashPassword(document.getElementById('newPassword').value);
+
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    if (users.some(u => u.username === username)) {
+      alert('Bu kullanıcı adı zaten mevcut!');
+      return;
+    }
+
+    users.push({ username, passwordHash: password });
+    localStorage.setItem('users', JSON.stringify(users));
+    alert('Yeni kullanıcı başarıyla eklendi!');
+  }
+</script>
+
+</body>
+</html>
